@@ -22,46 +22,44 @@ package cloud
 import (
 	"context"
 
+	"github.com/apache/cloudstack-go/v2/cloudstack"
 	"k8s.io/klog/v2"
 )
 
 func (c *client) GetVMByID(ctx context.Context, vmID string) (*VM, error) {
 	logger := klog.FromContext(ctx)
-	p := c.VirtualMachine.NewListVirtualMachinesParams()
-	p.SetId(vmID)
-	if c.projectID != "" {
-		p.SetProjectid(c.projectID)
-	}
 	logger.V(2).Info("CloudStack API call", "command", "ListVirtualMachines", "params", map[string]string{
 		"id":        vmID,
 		"projectID": c.projectID,
 	})
-	l, err := c.VirtualMachine.ListVirtualMachines(p)
-	if err != nil {
-		return nil, err
-	}
-	if l.Count == 0 {
-		return nil, ErrNotFound
-	}
-	if l.Count > 1 {
-		return nil, ErrTooManyResults
-	}
-	vm := l.VirtualMachines[0]
-	logger.V(2).Info("Returning VM", "vmID", vm.Id, "zoneID", vm.Zoneid)
 
-	return &VM{
-		ID:     vm.Id,
-		ZoneID: vm.Zoneid,
-	}, nil
+	return c.getVMByParam(ctx, func(p *cloudstack.ListVirtualMachinesParams) {
+		p.SetId(vmID)
+	})
 }
 
 func (c *client) getVMByName(ctx context.Context, name string) (*VM, error) {
 	logger := klog.FromContext(ctx)
-	p := c.VirtualMachine.NewListVirtualMachinesParams()
-	p.SetName(name)
 	logger.V(2).Info("CloudStack API call", "command", "ListVirtualMachines", "params", map[string]string{
-		"name": name,
+		"name":      name,
+		"projectID": c.projectID,
 	})
+
+	return c.getVMByParam(ctx, func(p *cloudstack.ListVirtualMachinesParams) {
+		p.SetName(name)
+	})
+}
+
+func (c *client) getVMByParam(ctx context.Context, setParams func(p *cloudstack.ListVirtualMachinesParams)) (*VM, error) {
+	p := c.VirtualMachine.NewListVirtualMachinesParams()
+
+	if c.projectID != "" {
+		p.SetProjectid(c.projectID)
+	}
+
+	// set params for virtual machine list
+	setParams(p)
+
 	l, err := c.VirtualMachine.ListVirtualMachines(p)
 	if err != nil {
 		return nil, err
@@ -73,6 +71,7 @@ func (c *client) getVMByName(ctx context.Context, name string) (*VM, error) {
 		return nil, ErrTooManyResults
 	}
 	vm := l.VirtualMachines[0]
+	klog.FromContext(ctx).V(2).Info("Returning VM", "vmID", vm.Id, "zoneID", vm.Zoneid)
 
 	return &VM{
 		ID:     vm.Id,
