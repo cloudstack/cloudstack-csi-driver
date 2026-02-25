@@ -29,8 +29,7 @@ import (
 func (c *client) GetVMByID(ctx context.Context, vmID string) (*VM, error) {
 	logger := klog.FromContext(ctx)
 	logger.V(2).Info("CloudStack API call", "command", "ListVirtualMachines", "params", map[string]string{
-		"id":        vmID,
-		"projectID": c.projectID,
+		"id": vmID,
 	})
 
 	return c.getVMByParam(ctx, func(p *cloudstack.ListVirtualMachinesParams) {
@@ -41,8 +40,7 @@ func (c *client) GetVMByID(ctx context.Context, vmID string) (*VM, error) {
 func (c *client) getVMByName(ctx context.Context, name string) (*VM, error) {
 	logger := klog.FromContext(ctx)
 	logger.V(2).Info("CloudStack API call", "command", "ListVirtualMachines", "params", map[string]string{
-		"name":      name,
-		"projectID": c.projectID,
+		"name": name,
 	})
 
 	return c.getVMByParam(ctx, func(p *cloudstack.ListVirtualMachinesParams) {
@@ -52,10 +50,6 @@ func (c *client) getVMByName(ctx context.Context, name string) (*VM, error) {
 
 func (c *client) getVMByParam(ctx context.Context, setParams func(p *cloudstack.ListVirtualMachinesParams)) (*VM, error) {
 	p := c.VirtualMachine.NewListVirtualMachinesParams()
-
-	if c.projectID != "" {
-		p.SetProjectid(c.projectID)
-	}
 
 	// set params for virtual machine list
 	setParams(p)

@@ -26,6 +26,7 @@ import (
 	"errors"
 
 	"github.com/apache/cloudstack-go/v2/cloudstack"
+	"k8s.io/klog/v2"
 )
 
 // Interface is the CloudStack client interface.
@@ -70,6 +71,7 @@ type Volume struct {
 	DeviceID         string
 }
 
+// Volume represents a CloudStack snapshot.
 type Snapshot struct {
 	ID   string
 	Name string
@@ -99,12 +101,18 @@ var (
 // client is the implementation of Interface.
 type client struct {
 	*cloudstack.CloudStackClient
-	projectID string
 }
 
 // New creates a new cloud connector, given its configuration.
 func New(config *Config) Interface {
 	csClient := cloudstack.NewAsyncClient(config.APIURL, config.APIKey, config.SecretKey, config.VerifySSL)
 
-	return &client{csClient, config.ProjectID}
+	// Set the project id to every request.
+	// This is possible because we just could work in one project with the previous implementation.
+	if config.ProjectID != "" {
+		csClient.DefaultOptions(cloudstack.WithProject(config.ProjectID))
+		klog.Background().V(2).Info("Set projectID to cloud connector", "projectID", config.ProjectID)
+	}
+
+	return &client{csClient}
 }
