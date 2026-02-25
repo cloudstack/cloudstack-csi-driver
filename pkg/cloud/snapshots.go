@@ -31,9 +31,7 @@ import (
 func (c *client) GetSnapshotByID(ctx context.Context, snapshotID string) (*Snapshot, error) {
 	logger := klog.FromContext(ctx)
 	p := c.Snapshot.NewListSnapshotsParams()
-	if snapshotID != "" {
-		p.SetId(snapshotID)
-	}
+	p.SetId(snapshotID)
 	logger.V(2).Info("CloudStack API call", "command", "ListSnapshots", "params", map[string]string{
 		"id": snapshotID,
 	})
@@ -63,9 +61,7 @@ func (c *client) GetSnapshotByID(ctx context.Context, snapshotID string) (*Snaps
 func (c *client) CreateSnapshot(ctx context.Context, volumeID, name string) (*Snapshot, error) {
 	logger := klog.FromContext(ctx)
 	p := c.Snapshot.NewCreateSnapshotParams(volumeID)
-	if name != "" {
-		p.SetName(name)
-	}
+	p.SetName(name)
 	logger.V(2).Info("CloudStack API call", "command", "CreateSnapshot", "params", map[string]string{
 		"volumeid": volumeID,
 		"name":     name,
@@ -103,9 +99,6 @@ func (c *client) DeleteSnapshot(_ context.Context, snapshotID string) error {
 
 func (c *client) GetSnapshotByName(ctx context.Context, name string) (*Snapshot, error) {
 	logger := klog.FromContext(ctx)
-	if name == "" {
-		return nil, ErrNotFound
-	}
 	p := c.Snapshot.NewListSnapshotsParams()
 	p.SetName(name)
 	logger.V(2).Info("CloudStack API call", "command", "ListSnapshots", "params", map[string]string{
@@ -138,12 +131,16 @@ func (c *client) GetSnapshotByName(ctx context.Context, name string) (*Snapshot,
 func (c *client) ListSnapshots(ctx context.Context, volumeID, snapshotID string) ([]*Snapshot, error) {
 	logger := klog.FromContext(ctx)
 	p := c.Snapshot.NewListSnapshotsParams()
+
+	// snapshotID is optional: csi.ListSnapshotsRequest
 	if snapshotID != "" {
 		p.SetId(snapshotID)
 	}
+	// volumeID is optional: csi.ListSnapshotsRequest
 	if volumeID != "" {
 		p.SetVolumeid(volumeID)
 	}
+
 	logger.V(2).Info("CloudStack API call", "command", "ListSnapshots", "params", map[string]string{
 		"id":       snapshotID,
 		"volumeid": volumeID,
