@@ -119,7 +119,7 @@ func (c *client) ListSnapshots(ctx context.Context, volumeID, snapshotID string)
 		p.SetVolumeid(volumeID)
 	}
 
-	// There is no list function that uses the client default project id
+	// There is no list function that uses the client default project id option
 	if c.projectID != "" {
 		p.SetProjectid(c.projectID)
 	}

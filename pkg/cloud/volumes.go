@@ -82,7 +82,7 @@ func (c *client) CreateVolume(ctx context.Context, diskOfferingID, zoneID, name 
 	p.SetZoneid(zoneID)
 	p.SetName(name)
 	p.SetSize(sizeInGB)
-	// There is no create function that uses the client default project id
+	// There is no create function that uses the client default project id option
 	if c.projectID != "" {
 		p.SetProjectid(c.projectID)
 	}

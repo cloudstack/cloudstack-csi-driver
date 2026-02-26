@@ -108,8 +108,8 @@ type client struct {
 func New(config *Config) Interface {
 	csClient := cloudstack.NewAsyncClient(config.APIURL, config.APIKey, config.SecretKey, config.VerifySSL)
 
-	// Set the project id to every request.
-	// This is possible because we just could work in one project with the previous implementation.
+	// Set the project id to every request that support options.
+	// This is possible because we also could work in one project only with the previous implementation.
 	if config.ProjectID != "" {
 		csClient.DefaultOptions(cloudstack.WithProject(config.ProjectID))
 		klog.Background().V(2).Info("Set projectID to cloud connector", "projectID", config.ProjectID)
