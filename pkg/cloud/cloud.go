@@ -71,7 +71,7 @@ type Volume struct {
 	DeviceID         string
 }
 
-// Volume represents a CloudStack snapshot.
+// Snapshot represents a CloudStack snapshot.
 type Snapshot struct {
 	ID   string
 	Name string
@@ -101,6 +101,7 @@ var (
 // client is the implementation of Interface.
 type client struct {
 	*cloudstack.CloudStackClient
+	projectID string // Used by some specific cloudstack api calls
 }
 
 // New creates a new cloud connector, given its configuration.
@@ -114,5 +115,5 @@ func New(config *Config) Interface {
 		klog.Background().V(2).Info("Set projectID to cloud connector", "projectID", config.ProjectID)
 	}
 
-	return &client{csClient}
+	return &client{csClient, config.ProjectID}
 }

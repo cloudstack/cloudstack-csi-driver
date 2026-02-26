@@ -22,50 +22,36 @@ package cloud
 import (
 	"context"
 
-	"github.com/apache/cloudstack-go/v2/cloudstack"
 	"k8s.io/klog/v2"
 )
 
 func (c *client) GetVMByID(ctx context.Context, vmID string) (*VM, error) {
 	logger := klog.FromContext(ctx)
-	logger.V(2).Info("CloudStack API call", "command", "ListVirtualMachines", "params", map[string]string{
+	logger.V(2).Info("CloudStack API call", "command", "GetVirtualMachineByID", "params", map[string]string{
 		"id": vmID,
 	})
 
-	return c.getVMByParam(ctx, func(p *cloudstack.ListVirtualMachinesParams) {
-		p.SetId(vmID)
-	})
+	vm, _, err := c.VirtualMachine.GetVirtualMachineByID(vmID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &VM{
+		ID:     vm.Id,
+		ZoneID: vm.Zoneid,
+	}, nil
 }
 
 func (c *client) getVMByName(ctx context.Context, name string) (*VM, error) {
 	logger := klog.FromContext(ctx)
-	logger.V(2).Info("CloudStack API call", "command", "ListVirtualMachines", "params", map[string]string{
+	logger.V(2).Info("CloudStack API call", "command", "GetVirtualMachineByName", "params", map[string]string{
 		"name": name,
 	})
 
-	return c.getVMByParam(ctx, func(p *cloudstack.ListVirtualMachinesParams) {
-		p.SetName(name)
-	})
-}
-
-func (c *client) getVMByParam(ctx context.Context, setParams func(p *cloudstack.ListVirtualMachinesParams)) (*VM, error) {
-	p := c.VirtualMachine.NewListVirtualMachinesParams()
-
-	// set params for virtual machine list
-	setParams(p)
-
-	l, err := c.VirtualMachine.ListVirtualMachines(p)
+	vm, _, err := c.VirtualMachine.GetVirtualMachineByName(name)
 	if err != nil {
 		return nil, err
 	}
-	if l.Count == 0 {
-		return nil, ErrNotFound
-	}
-	if l.Count > 1 {
-		return nil, ErrTooManyResults
-	}
-	vm := l.VirtualMachines[0]
-	klog.FromContext(ctx).V(2).Info("Returning VM", "vmID", vm.Id, "zoneID", vm.Zoneid)
 
 	return &VM{
 		ID:     vm.Id,
