@@ -34,8 +34,12 @@ func (c *client) GetSnapshotByID(ctx context.Context, snapshotID string) (*Snaps
 		"id": snapshotID,
 	})
 
-	snapshot, _, err := c.Snapshot.GetSnapshotByID(snapshotID)
+	snapshot, count, err := c.Snapshot.GetSnapshotByID(snapshotID)
 	if err != nil {
+		if count == 0 {
+			return nil, ErrNotFound
+		}
+
 		return nil, err
 	}
 
@@ -91,8 +95,12 @@ func (c *client) GetSnapshotByName(ctx context.Context, name string) (*Snapshot,
 	logger.V(2).Info("CloudStack API call", "command", "GetSnapshotByName", "params", map[string]string{
 		"name": name,
 	})
-	snapshot, _, err := c.Snapshot.GetSnapshotByName(name)
+	snapshot, count, err := c.Snapshot.GetSnapshotByName(name)
 	if err != nil {
+		if count == 0 {
+			return nil, ErrNotFound
+		}
+
 		return nil, err
 	}
 

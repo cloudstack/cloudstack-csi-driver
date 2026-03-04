@@ -51,8 +51,12 @@ func (c *client) GetVolumeByID(ctx context.Context, volumeID string) (*Volume, e
 		"id": volumeID,
 	})
 
-	volume, _, err := c.Volume.GetVolumeByID(volumeID)
+	volume, count, err := c.Volume.GetVolumeByID(volumeID)
 	if err != nil {
+		if count == 0 {
+			return nil, ErrNotFound
+		}
+
 		return nil, err
 	}
 
@@ -67,8 +71,12 @@ func (c *client) GetVolumeByName(ctx context.Context, name string) (*Volume, err
 		"name": name,
 	})
 
-	volume, _, err := c.Volume.GetVolumeByName(name)
+	volume, count, err := c.Volume.GetVolumeByName(name)
 	if err != nil {
+		if count == 0 {
+			return nil, ErrNotFound
+		}
+
 		return nil, err
 	}
 

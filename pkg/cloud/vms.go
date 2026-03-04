@@ -31,8 +31,12 @@ func (c *client) GetVMByID(ctx context.Context, vmID string) (*VM, error) {
 		"id": vmID,
 	})
 
-	vm, _, err := c.VirtualMachine.GetVirtualMachineByID(vmID)
+	vm, count, err := c.VirtualMachine.GetVirtualMachineByID(vmID)
 	if err != nil {
+		if count == 0 {
+			return nil, ErrNotFound
+		}
+
 		return nil, err
 	}
 
@@ -48,8 +52,12 @@ func (c *client) getVMByName(ctx context.Context, name string) (*VM, error) {
 		"name": name,
 	})
 
-	vm, _, err := c.VirtualMachine.GetVirtualMachineByName(name)
+	vm, count, err := c.VirtualMachine.GetVirtualMachineByName(name)
 	if err != nil {
+		if count == 0 {
+			return nil, ErrNotFound
+		}
+
 		return nil, err
 	}
 
