@@ -93,9 +93,8 @@ type VM struct {
 
 // Specific errors.
 var (
-	ErrNotFound       = errors.New("not found")
-	ErrTooManyResults = errors.New("too many results")
-	ErrAlreadyExists  = errors.New("already exists")
+	ErrNotFound      = errors.New("not found")
+	ErrAlreadyExists = errors.New("already exists")
 )
 
 // client is the implementation of Interface.

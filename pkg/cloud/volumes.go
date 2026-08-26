@@ -65,8 +65,6 @@ func (c *client) GetVolumeByID(ctx context.Context, volumeID string) (*Volume, e
 
 func (c *client) GetVolumeByName(ctx context.Context, name string) (*Volume, error) {
 	logger := klog.FromContext(ctx)
-	p := c.Volume.NewListVolumesParams()
-	p.SetName(name)
 	logger.V(2).Info("CloudStack API call", "command", "GetVolumeByName", "params", map[string]string{
 		"name": name,
 	})
