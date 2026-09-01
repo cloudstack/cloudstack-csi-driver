@@ -27,27 +27,18 @@ import (
 
 func (c *client) GetVMByID(ctx context.Context, vmID string) (*VM, error) {
 	logger := klog.FromContext(ctx)
-	p := c.VirtualMachine.NewListVirtualMachinesParams()
-	p.SetId(vmID)
-	if c.projectID != "" {
-		p.SetProjectid(c.projectID)
-	}
-	logger.V(2).Info("CloudStack API call", "command", "ListVirtualMachines", "params", map[string]string{
-		"id":        vmID,
-		"projectID": c.projectID,
+	logger.V(2).Info("CloudStack API call", "command", "GetVirtualMachineByID", "params", map[string]string{
+		"id": vmID,
 	})
-	l, err := c.VirtualMachine.ListVirtualMachines(p)
+
+	vm, count, err := c.VirtualMachine.GetVirtualMachineByID(vmID)
 	if err != nil {
+		if count == 0 {
+			return nil, ErrNotFound
+		}
+
 		return nil, err
 	}
-	if l.Count == 0 {
-		return nil, ErrNotFound
-	}
-	if l.Count > 1 {
-		return nil, ErrTooManyResults
-	}
-	vm := l.VirtualMachines[0]
-	logger.V(2).Info("Returning VM", "vmID", vm.Id, "zoneID", vm.Zoneid)
 
 	return &VM{
 		ID:     vm.Id,
@@ -57,22 +48,18 @@ func (c *client) GetVMByID(ctx context.Context, vmID string) (*VM, error) {
 
 func (c *client) getVMByName(ctx context.Context, name string) (*VM, error) {
 	logger := klog.FromContext(ctx)
-	p := c.VirtualMachine.NewListVirtualMachinesParams()
-	p.SetName(name)
-	logger.V(2).Info("CloudStack API call", "command", "ListVirtualMachines", "params", map[string]string{
+	logger.V(2).Info("CloudStack API call", "command", "GetVirtualMachineByName", "params", map[string]string{
 		"name": name,
 	})
-	l, err := c.VirtualMachine.ListVirtualMachines(p)
+
+	vm, count, err := c.VirtualMachine.GetVirtualMachineByName(name)
 	if err != nil {
+		if count == 0 {
+			return nil, ErrNotFound
+		}
+
 		return nil, err
 	}
-	if l.Count == 0 {
-		return nil, ErrNotFound
-	}
-	if l.Count > 1 {
-		return nil, ErrTooManyResults
-	}
-	vm := l.VirtualMachines[0]
 
 	return &VM{
 		ID:     vm.Id,

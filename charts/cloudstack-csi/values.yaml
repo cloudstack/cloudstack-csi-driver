@@ -350,6 +350,7 @@ syncer:
 
   # Job configurations
   backoffLimit: 4
+  ttlSecondsAfterFinished: 60
   restartPolicy: Never
 
   # securityContext on the syncer job

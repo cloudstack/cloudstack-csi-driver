@@ -31,19 +31,8 @@ import (
 	"github.com/cloudstack/cloudstack-csi-driver/pkg/util"
 )
 
-func (c *client) listVolumes(p *cloudstack.ListVolumesParams) (*Volume, error) {
-	l, err := c.Volume.ListVolumes(p)
-	if err != nil {
-		return nil, err
-	}
-	if l.Count == 0 {
-		return nil, ErrNotFound
-	}
-	if l.Count > 1 {
-		return nil, ErrTooManyResults
-	}
-	vol := l.Volumes[0]
-	v := Volume{
+func mapVolume(vol *cloudstack.Volume) *Volume {
+	return &Volume{
 		ID:               vol.Id,
 		Name:             vol.Name,
 		Size:             vol.Size,
@@ -54,34 +43,42 @@ func (c *client) listVolumes(p *cloudstack.ListVolumesParams) (*Volume, error) {
 		VirtualMachineID: vol.Virtualmachineid,
 		DeviceID:         strconv.FormatInt(vol.Deviceid, 10),
 	}
-
-	return &v, nil
 }
 
 func (c *client) GetVolumeByID(ctx context.Context, volumeID string) (*Volume, error) {
 	logger := klog.FromContext(ctx)
-	p := c.Volume.NewListVolumesParams()
-	p.SetId(volumeID)
-	if c.projectID != "" {
-		p.SetProjectid(c.projectID)
-	}
-	logger.V(2).Info("CloudStack API call", "command", "ListVolumes", "params", map[string]string{
-		"id":        volumeID,
-		"projectid": c.projectID,
+	logger.V(2).Info("CloudStack API call", "command", "GetVolumeByID", "params", map[string]string{
+		"id": volumeID,
 	})
 
-	return c.listVolumes(p)
+	volume, count, err := c.Volume.GetVolumeByID(volumeID)
+	if err != nil {
+		if count == 0 {
+			return nil, ErrNotFound
+		}
+
+		return nil, err
+	}
+
+	return mapVolume(volume), nil
 }
 
 func (c *client) GetVolumeByName(ctx context.Context, name string) (*Volume, error) {
 	logger := klog.FromContext(ctx)
-	p := c.Volume.NewListVolumesParams()
-	p.SetName(name)
-	logger.V(2).Info("CloudStack API call", "command", "ListVolumes", "params", map[string]string{
+	logger.V(2).Info("CloudStack API call", "command", "GetVolumeByName", "params", map[string]string{
 		"name": name,
 	})
 
-	return c.listVolumes(p)
+	volume, count, err := c.Volume.GetVolumeByName(name)
+	if err != nil {
+		if count == 0 {
+			return nil, ErrNotFound
+		}
+
+		return nil, err
+	}
+
+	return mapVolume(volume), nil
 }
 
 func (c *client) CreateVolume(ctx context.Context, diskOfferingID, zoneID, name string, sizeInGB int64) (string, error) {
@@ -91,6 +88,7 @@ func (c *client) CreateVolume(ctx context.Context, diskOfferingID, zoneID, name 
 	p.SetZoneid(zoneID)
 	p.SetName(name)
 	p.SetSize(sizeInGB)
+	// There is no create function that uses the client default project id option
 	if c.projectID != "" {
 		p.SetProjectid(c.projectID)
 	}
@@ -99,7 +97,6 @@ func (c *client) CreateVolume(ctx context.Context, diskOfferingID, zoneID, name 
 		"zoneid":         zoneID,
 		"name":           name,
 		"size":           strconv.FormatInt(sizeInGB, 10),
-		"projectid":      c.projectID,
 	})
 	vol, err := c.Volume.CreateVolume(p)
 	if err != nil {
@@ -199,7 +196,6 @@ func (c *client) CreateVolumeFromSnapshot(ctx context.Context, zoneID, name, pro
 		"name":       name,
 		"size":       strconv.FormatInt(sizeInGB, 10),
 		"snapshotid": snapshotID,
-		"projectid":  projectID,
 		"zoneid":     zoneID,
 	})
 	// Execute the API call to create volume from snapshot
@@ -209,7 +205,7 @@ func (c *client) CreateVolumeFromSnapshot(ctx context.Context, zoneID, name, pro
 		return nil, fmt.Errorf("failed to create volume from snapshot '%s': %w", snapshotID, err)
 	}
 
-	v := Volume{
+	return &Volume{
 		ID:               vol.Id,
 		Name:             vol.Name,
 		Size:             vol.Size,
@@ -219,7 +215,5 @@ func (c *client) CreateVolumeFromSnapshot(ctx context.Context, zoneID, name, pro
 		ZoneID:           vol.Zoneid,
 		VirtualMachineID: vol.Virtualmachineid,
 		DeviceID:         strconv.FormatInt(vol.Deviceid, 10),
-	}
-
-	return &v, nil
+	}, nil
 }

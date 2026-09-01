@@ -14,6 +14,7 @@ metadata:
   {{- end }}
 spec:
   backoffLimit: {{ .Values.syncer.backoffLimit }}
+  ttlSecondsAfterFinished: {{ .Values.syncer.ttlSecondsAfterFinished }}
   template:
     spec:
       securityContext: {{- toYaml .Values.syncer.podSecurityContext | nindent 8 }}
